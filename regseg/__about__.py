@@ -20,7 +20,7 @@ __license__ = 'MIT License'
 __status__ = 'Alpha'
 __description__ = """\
 Python interface to RegSeg, a surface-driven registration method \
-for the structure-informed segmentation of diffusion MR images\
+for the structure-informed segmentation of multispectral brain images\
 """
 
 __longdesc__ = """\
