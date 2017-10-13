@@ -3,7 +3,7 @@
 # @Author: oesteban
 # @Date:   2015-11-19 16:44:27
 # @Last Modified by:   oesteban
-# @Last Modified time: 2017-10-13 15:08:22
+# @Last Modified time: 2017-10-13 16:13:49
 """ regseg setup script """
 from __future__ import print_function, division, absolute_import, unicode_literals
 
@@ -55,9 +55,9 @@ def main():
         download_url=__download__,
         packages=find_packages(exclude=['*.tests']),
         package_data=package_data,
-        entry_points={
-            'console_scripts': [],  # format 'mriqc=mriqc.bin.mriqc_run:main'
-        },
+        entry_points={'console_scripts': [
+            'regseg_wrapper=pyacwereg.cli.wrapper:main',
+        ]},
         scripts=[
             'tools/extract_hcp.py',
             'tools/run_evaluations.py',
