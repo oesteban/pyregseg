@@ -1,0 +1,11 @@
+#documentation
+#recursive-include docs/_build/html *
+
+#data used for clustering
+recursive-include regseg/data *.json
+recursive-include regseg/data *.txt
+
+#Misc
+include EXAMPLE.rst
+include CHANGES.rst
+include LICENSE
