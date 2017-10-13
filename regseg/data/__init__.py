@@ -5,8 +5,8 @@
 #
 # @Author: oesteban - code@oscaresteban.es
 # @Date:   2014-06-03 11:49:42
-# @Last Modified by:   Oscar Esteban
-# @Last Modified time: 2015-03-03 14:50:07
+# @Last Modified by:   oesteban
+# @Last Modified time: 2017-10-13 14:55:28
 """Complementary data necessary in workflows
 
 .. module:: regseg.data
@@ -15,6 +15,7 @@
 .. moduleauthor:: Oscar Esteban <code@oscaresteban>
 
 """
+from __future__ import print_function, division, absolute_import, unicode_literals
 
 import os.path as op
 

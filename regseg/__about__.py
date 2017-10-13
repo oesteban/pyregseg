@@ -7,7 +7,7 @@ Python wrapper to RegSeg
 ========================
 
 """
-
+from __future__ import print_function, division, absolute_import, unicode_literals
 from datetime import date
 
 __version__ = '0.1.0'
@@ -41,6 +41,7 @@ CLASSIFIERS = [
     'Intended Audience :: Science/Research',
     'Topic :: Scientific/Engineering :: Image Recognition',
     'License :: OSI Approved :: MIT License',
+    'Programming Language :: Python :: 2.7',
     'Programming Language :: Python :: 3.5',
     'Programming Language :: Python :: 3.6',
 ]

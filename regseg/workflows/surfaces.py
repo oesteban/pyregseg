@@ -6,7 +6,7 @@
 # @Author: Oscar Esteban - code@oscaresteban.es
 # @Date:   2014-03-05 15:08:55
 # @Last Modified by:   oesteban
-# @Last Modified time: 2017-10-13 14:38:40
+# @Last Modified time: 2017-10-13 14:56:45
 """
 Surface extraction
 ++++++++++++++++++
@@ -17,7 +17,7 @@ Defines the workflows for extracting surfaces from segmentations
 :moduleauthor: Oscar Esteban <code@oscaresteban>
 
 """
-
+from __future__ import print_function, division, absolute_import, unicode_literals
 import os
 import os.path as op
 import nipype.pipeline.engine as pe             # pipeline engine

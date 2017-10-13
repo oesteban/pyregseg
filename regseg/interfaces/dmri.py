@@ -3,8 +3,8 @@
 # @Author: oesteban
 # @Date:   2015-03-10 16:15:07
 # @Last Modified by:   oesteban
-# @Last Modified time: 2015-03-11 11:13:51
-
+# @Last Modified time: 2017-10-13 14:55:45
+from __future__ import print_function, division, absolute_import, unicode_literals
 import os
 import os.path as op
 import nibabel as nb

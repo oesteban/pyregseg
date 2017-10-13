@@ -3,7 +3,8 @@
 # @Author: oesteban
 # @Date:   2015-02-06 13:26:12
 # @Last Modified by:   oesteban
-# @Last Modified time: 2015-03-03 15:05:53
+# @Last Modified time: 2017-10-13 14:57:01
+from __future__ import print_function, division, absolute_import, unicode_literals
 
 
 def laplacian_filter(in_file, in_mask=None, out_file=None):

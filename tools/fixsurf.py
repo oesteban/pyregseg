@@ -3,6 +3,7 @@ import numpy as np
 from tvtk.api import tvtk
 from argparse import ArgumentParser
 from argparse import RawTextHelpFormatter
+from __future__ import print_function, division, absolute_import, unicode_literals
 
 
 if __name__ == '__main__':
@@ -18,10 +19,10 @@ if __name__ == '__main__':
     r = tvtk.PolyDataReader(file_name=opts.input)
     r.update()
     m = r.output
-    
+
     points = np.array(m.points).astype(np.float32)
     m.points = points
-    
+
     w = tvtk.PolyDataWriter(file_name=opts.output)
     w.set_input_data(m)
     w.write()
