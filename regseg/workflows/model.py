@@ -3,7 +3,7 @@
 # @Author: oesteban
 # @Date:   2014-10-23 14:43:23
 # @Last Modified by:   oesteban
-# @Last Modified time: 2015-03-03 15:33:34
+# @Last Modified time: 2017-10-13 14:23:45
 
 import os
 import os.path as op
@@ -15,12 +15,12 @@ from nipype.interfaces import fsl
 from nipype.interfaces import freesurfer as fs
 from nipype.algorithms.misc import NormalizeProbabilityMapSet as Normalize
 
-from pyacwereg.workflows.surfaces import extract_surface
-from pyacwereg.interfaces import phantoms as pip
+from .surfaces import extract_surface
+from ..interfaces import phantoms as pip
 
-from pyacwereg.interfaces.warps import (RandomBSplineDeformation,
-                                        FieldBasedWarp, InverseField)
-from pyacwereg.interfaces.utility import Surf2Vol
+from ..interfaces.warps import (RandomBSplineDeformation,
+                                FieldBasedWarp, InverseField)
+from ..interfaces.utility import Surf2Vol
 
 
 def generate_phantom(name='PhantomGeneration'):

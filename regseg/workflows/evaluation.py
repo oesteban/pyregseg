@@ -5,8 +5,8 @@
 #
 # @Author: Oscar Esteban - code@oscaresteban.es
 # @Date:   2014-03-12 16:59:14
-# @Last Modified by:   Oscar Esteban
-# @Last Modified time: 2015-02-19 10:31:00
+# @Last Modified by:   oesteban
+# @Last Modified time: 2017-10-13 14:22:46
 
 import os
 import os.path as op
@@ -22,11 +22,11 @@ from nipype.algorithms import metrics as namev
 from nipype.interfaces import fsl as fsl
 from nipype.interfaces import freesurfer as fs
 
-from pyacwereg.interfaces.warps import InverseField
-from pyacwereg.interfaces.utility import (ExportSlices, HausdorffDistance,
-                                          ComputeEnergy)
-from pyacwereg.workflows.model import generate_phantom
-from registration import identity_wf, default_regseg
+from ..interfaces.warps import InverseField
+from ..interfaces.utility import (ExportSlices, HausdorffDistance,
+                                  ComputeEnergy)
+from ..workflows.model import generate_phantom
+from .registration import identity_wf, default_regseg
 
 
 def bspline(name='BSplineEvaluation', shapes=['gyrus'], snr_list=[300],

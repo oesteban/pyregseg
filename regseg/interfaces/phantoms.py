@@ -3,20 +3,20 @@
 # @Author: oesteban
 # @Date:   2014-10-23 14:45:06
 # @Last Modified by:   oesteban
-# @Last Modified time: 2015-01-13 13:01:17
+# @Last Modified time: 2017-10-13 14:13:59
 import os
 import os.path as op
 import nibabel as nb
 import numpy as np
 
+from nipype import logging
 from nipype.interfaces.base import (BaseInterface, traits, TraitedSpec, File,
                                     InputMultiPath, OutputMultiPath,
                                     BaseInterfaceInputSpec, isdefined,
                                     DynamicTraitedSpec, Directory,
                                     CommandLine, CommandLineInputSpec)
 
-from pyacwereg import misc as pm
-from nipype import logging
+from .. import misc as pm
 iflogger = logging.getLogger('interface')
 
 

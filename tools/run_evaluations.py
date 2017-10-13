@@ -6,7 +6,7 @@
 # @Author: oesteban - code@oscaresteban.es
 # @Date:   2014-04-04 19:39:38
 # @Last Modified by:   oesteban
-# @Last Modified time: 2015-03-10 14:56:04
+# @Last Modified time: 2017-10-13 14:34:57
 
 
 import os
@@ -25,9 +25,9 @@ if __name__ == '__main__':
     except:
         pass
 
-    from pyacwereg.workflows.realdata import hcp_workflow
+    from regseg.workflows.realdata import hcp_workflow
 
-    parser = ArgumentParser(description='PyACWEReg - Experiment on HCP data',
+    parser = ArgumentParser(description='RegSeg - Experiment on HCP data',
                             formatter_class=RawTextHelpFormatter)
 
     g_input = parser.add_argument_group('Input')

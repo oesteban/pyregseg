@@ -9,8 +9,8 @@
 # @Last Modified time: 2015-03-03 14:50:07
 """Complementary data necessary in workflows
 
-.. module:: pyacwereg.data
-   :synopsis: data required by :py:mod:`pyacwereg`
+.. module:: regseg.data
+   :synopsis: data required by :py:mod:`regseg`
 
 .. moduleauthor:: Oscar Esteban <code@oscaresteban>
 

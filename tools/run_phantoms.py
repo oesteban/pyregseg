@@ -22,7 +22,7 @@ def phantoms_wf(options, cfg):
     import nipype.pipeline.engine as pe
     from nipype import config, logging
     from nipype.interfaces import utility as niu
-    from pyacwereg.workflows import evaluation as ev
+    from regseg.workflows import evaluation as ev
 
     config.update_config(cfg)
     logging.update_logging(config)

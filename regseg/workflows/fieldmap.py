@@ -3,7 +3,7 @@
 # @Author: oesteban
 # @Date:   2015-01-15 15:00:48
 # @Last Modified by:   oesteban
-# @Last Modified time: 2015-03-11 10:35:14
+# @Last Modified time: 2017-10-13 14:27:08
 
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
@@ -14,8 +14,8 @@ from nipype.interfaces import ants
 from nipype.algorithms.misc import AddNoise
 from nipype.workflows.dmri.fsl import utils as nwu
 
-from pyacwereg.interfaces.dmri import PhaseUnwrap
-from pyacwereg.interfaces.utility import SigmoidFilter
+from ..interfaces.dmri import PhaseUnwrap
+from ..interfaces.utility import SigmoidFilter
 
 
 def bmap_registration(name="Bmap_Registration"):
@@ -628,7 +628,7 @@ def scale_range(in_file, value=1.0, in_mask=None, out_file=None):
 
 
 def filter_fmap(in_file, in_mask=None, out_file=None):
-    from pyacwereg.filters import wavelets_denoise, laplacian_filter
+    from ..filters import wavelets_denoise, laplacian_filter
     import numpy as np
     import nibabel as nb
     import os.path as op

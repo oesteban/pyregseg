@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 # @Author: oesteban
 # @Date:   2015-01-15 10:47:12
-# @Last Modified by:   Oscar Esteban
-# @Last Modified time: 2015-03-17 13:09:47
+# @Last Modified by:   oesteban
+# @Last Modified time: 2017-10-13 14:25:07
 
 import os.path as op
 
@@ -11,7 +11,7 @@ import os.path as op
 def hcp_workflow(name='Evaluation_HCP', settings={},
                  map_metric=False, compute_fmb=False):
     """
-    The pyacwereg evaluation workflow for the human connectome project (HCP)
+    The regseg evaluation workflow for the human connectome project (HCP)
     """
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
@@ -20,14 +20,14 @@ def hcp_workflow(name='Evaluation_HCP', settings={},
     from nipype.algorithms.misc import AddCSVRow
     from nipype.workflows.dmri.fsl.artifacts import sdc_fmb
 
-    from pyacwereg import data
-    from pyacwereg.interfaces.utility import (ExportSlices, TileSlicesGrid,
-                                              SlicesGridplot)
-    from pyacwereg.workflows.registration import regseg_wf, sdc_t2b
-    from pyacwereg.workflows import evaluation as ev
-    from pyacwereg.workflows.preprocess import preprocess
-    from pyacwereg.workflows.fieldmap import process_vsm
-    from pyacwereg.workflows.dti import mrtrix_dti
+    from .. import data
+    from ..interfaces.utility import (ExportSlices, TileSlicesGrid,
+                                      SlicesGridplot)
+    from .registration import regseg_wf, sdc_t2b
+    from .preprocess import preprocess
+    from .fieldmap import process_vsm
+    from .dti import mrtrix_dti
+    import evaluation as ev
 
     wf = pe.Workflow(name=name)
 

@@ -4,8 +4,8 @@
 #
 # @Author: Oscar Esteban - code@oscaresteban.es
 # @Date:   2014-03-12 13:20:04
-# @Last Modified by:   Oscar Esteban
-# @Last Modified time: 2015-03-10 12:57:13
+# @Last Modified by:   oesteban
+# @Last Modified time: 2017-10-13 14:17:52
 
 import os
 import os.path as op
@@ -23,7 +23,7 @@ from nipype import logging
 logger = logging.getLogger('interface')
 
 
-class ACWERegInputGroupSpec(ANTSCommandInputSpec):
+class RegSegInputGroupSpec(ANTSCommandInputSpec):
     # Functional options
     float_trait = traits.Either(None, traits.Float(1.0))
     int_trait = traits.Either(None, traits.Int(0))
@@ -99,7 +99,7 @@ class ACWERegInputGroupSpec(ANTSCommandInputSpec):
         desc='alpha scalar')
 
 
-class ACWERegInputSpec(ACWERegInputGroupSpec):
+class RegSegInputSpec(RegSegInputGroupSpec):
     in_fixed = InputMultiPath(
         File(exists=True), argstr='-F %s', mandatory=True,
         desc=('target volume/image(s) contrast to register contours to'))
@@ -119,7 +119,7 @@ class ACWERegInputSpec(ACWERegInputGroupSpec):
         1, argstr='-v %d', desc=('verbosity of intermediate results output'))
 
 
-class ACWERegOutputSpec(TraitedSpec):
+class RegSegOutputSpec(TraitedSpec):
     out_warped = OutputMultiPath(File(exists=True,
                                       desc='source images unwarped'))
     out_surfs = OutputMultiPath(File(exists=True,
@@ -132,15 +132,15 @@ class ACWERegOutputSpec(TraitedSpec):
     out_coeff = OutputMultiPath(File(desc='output coefficients'))
 
 
-class ACWEReg(ANTSCommand):
+class RegSeg(ANTSCommand):
 
     """
-    Wraps regseg application from ACWERegistration to perform
+    Wraps regseg application to perform
     joint segmentation-registration based on ACWE.
 
     Example
     -------
-    >>> regseg = ACWEReg()
+    >>> regseg = RegSeg()
     >>> regseg.inputs.in_fixed = ['T1w.nii.gz', 'T2w.nii.gz']
     >>> regseg.inputs.in_pior = ['csf.vtk', 'white_lh.vtk', 'white_rh.vtk',
     ...                          'pial_lh.vtk', 'pial_rh.vtk']
@@ -149,9 +149,9 @@ class ACWEReg(ANTSCommand):
 pial_lh.vtk pial_rh.vtk -o tests [ -i 30 -u 10 -f 1.0 -s 0.5 -a 0.0 -b 0.0 \
 -g 8 ]'
     """
-    input_spec = ACWERegInputSpec
-    input_group_spec = ACWERegInputGroupSpec
-    output_spec = ACWERegOutputSpec
+    input_spec = RegSegInputSpec
+    input_group_spec = RegSegInputGroupSpec
+    output_spec = RegSegOutputSpec
     _grouped_traits = []
     _cmd = 'regseg'
     _num_levels = 0
@@ -159,7 +159,7 @@ pial_lh.vtk pial_rh.vtk -o tests [ -i 30 -u 10 -f 1.0 -s 0.5 -a 0.0 -b 0.0 \
 
     def __init__(self, command=None, **inputs):
         """ Combine general and grouped inputs """
-        super(ACWEReg, self).__init__(command=command, **inputs)
+        super(RegSeg, self).__init__(command=command, **inputs)
         self.groups = self.input_group_spec()
         general_names = ANTSCommandInputSpec().trait_names()
 
@@ -199,7 +199,7 @@ pial_lh.vtk pial_rh.vtk -o tests [ -i 30 -u 10 -f 1.0 -s 0.5 -a 0.0 -b 0.0 \
 
         skip += ['levels']
 
-        all_args += super(ACWEReg,
+        all_args += super(RegSeg,
                           self)._parse_inputs(skip=skip + self._grouped_traits)
 
         for i in range(self._num_levels):
@@ -245,7 +245,6 @@ pial_lh.vtk pial_rh.vtk -o tests [ -i 30 -u 10 -f 1.0 -s 0.5 -a 0.0 -b 0.0 \
                 return ''
 
         if isinstance(value, tuple):
-            print spec.argstr
             flag, pattern = spec.argstr.split(' %', 1)
             pattern = '%' + pattern
             formatted = flag + ' ' + ' '.join(pattern % elt for elt in value)
@@ -254,7 +253,7 @@ pial_lh.vtk pial_rh.vtk -o tests [ -i 30 -u 10 -f 1.0 -s 0.5 -a 0.0 -b 0.0 \
         if value is None or value.__class__.__name__ == 'NoneType':
             return ''
 
-        return super(ACWEReg, self)._format_arg(name, spec, value)
+        return super(RegSeg, self)._format_arg(name, spec, value)
 
     def _list_outputs(self):
         out_prefix = self.inputs.out_prefix
@@ -277,21 +276,21 @@ pial_lh.vtk pial_rh.vtk -o tests [ -i 30 -u 10 -f 1.0 -s 0.5 -a 0.0 -b 0.0 \
         return outputs
 
 
-class ACWEReportInputSpec(BaseInterfaceInputSpec):
+class RegSegReportInputSpec(BaseInterfaceInputSpec):
     in_log = File(exists=True, mandatory=True, desc='Input log-file')
     out_file = File('report.pdf', usedefault=True, desc='output report')
 
 
-class ACWEReportOutputSpec(TraitedSpec):
+class RegSegReportOutputSpec(TraitedSpec):
     out_file = File(desc='output report')
 
 
-class ACWEReport(BaseInterface):
-    input_spec = ACWEReportInputSpec
-    output_spec = ACWEReportOutputSpec
+class RegSegReport(BaseInterface):
+    input_spec = RegSegReportInputSpec
+    output_spec = RegSegReportOutputSpec
 
     def _run_interface(self, runtime):
-        from pyacwereg import viz
+        from .. import viz
         data, _ = parse_iterations(self.inputs.in_log)
         levels = parse_levels(self.inputs.in_log)
         out_file = op.abspath(self.inputs.out_file)

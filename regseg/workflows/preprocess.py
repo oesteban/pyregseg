@@ -3,7 +3,7 @@
 # @Author: oesteban
 # @Date:   2015-03-02 14:48:33
 # @Last Modified by:   oesteban
-# @Last Modified time: 2015-03-03 15:02:40
+# @Last Modified time: 2017-10-13 14:27:29
 
 
 def preprocess(name='Preprocessing'):
@@ -15,8 +15,8 @@ def preprocess(name='Preprocessing'):
     from nipype.interfaces import io as nio
     from nipype.interfaces import fsl
 
-    from pyacwereg.workflows.fieldmap import bmap_registration
-    from pyacwereg.workflows.surfaces import all_surfaces
+    from .fieldmap import bmap_registration
+    from .surfaces import all_surfaces
 
     fnames = dict(t1w='T1w_acpc_dc_restore.nii.gz',
                   t1w_brain='T1w_acpc_dc_restore_brain.nii.gz',
@@ -96,8 +96,8 @@ def warp_dwi(name='WarpDWIWorkflow'):
     from nipype.interfaces import io as nio
     from nipype.algorithms.mesh import WarpPoints
 
-    from pyacwereg.workflows.registration import apply_dfm
-    from pyacwereg.workflows.fieldmap import vsm_fmb
+    from .registration import apply_dfm
+    from .fieldmap import vsm_fmb
 
     inputnode = pe.Node(niu.IdentityInterface(
         fields=['in_dwis', 'dwi_mask', 'surf', 'mr_param', 'bmap']),

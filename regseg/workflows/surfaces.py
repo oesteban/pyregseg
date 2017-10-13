@@ -5,8 +5,8 @@
 #
 # @Author: Oscar Esteban - code@oscaresteban.es
 # @Date:   2014-03-05 15:08:55
-# @Last Modified by:   Oscar Esteban
-# @Last Modified time: 2015-04-08 12:23:43
+# @Last Modified by:   oesteban
+# @Last Modified time: 2017-10-13 14:38:40
 """
 Surface extraction
 ++++++++++++++++++
@@ -87,7 +87,7 @@ freesurfer/2013-June/030586.html>
 def all_surfaces(name='Surfaces', gen_outer=False):
     import nipype.pipeline.engine as pe
     from nipype.interfaces.io import JSONFileGrabber
-    import pyacwereg.data as data
+    from .. import data
 
     inputnode = pe.Node(niu.IdentityInterface(
         fields=['aseg', 'norm', 'in_mask']), name='inputnode')

@@ -4,14 +4,15 @@
 #
 # @Author: Oscar Esteban - code@oscaresteban.es
 # @Date:   2014-03-12 13:20:04
-# @Last Modified by:   Oscar Esteban
-# @Last Modified time: 2014-12-22 13:32:41
+# @Last Modified by:   oesteban
+# @Last Modified time: 2017-10-13 14:14:11
 
 import os
 import os.path as op
 import numpy as np
 import nibabel as nib
 
+from nipype import logging
 from nipype.interfaces.base import (traits, TraitedSpec, CommandLine,
                                     BaseInterface, CommandLineInputSpec,
                                     BaseInterfaceInputSpec, InputMultiPath,
@@ -19,7 +20,6 @@ from nipype.interfaces.base import (traits, TraitedSpec, CommandLine,
                                     Undefined)
 from nipype.interfaces.ants.base import (ANTSCommand, ANTSCommandInputSpec)
 
-from nipype import logging
 logger = logging.getLogger('interface')
 
 
@@ -59,7 +59,7 @@ class RandomBSplineDeformationOutputSpec(TraitedSpec):
 
 class RandomBSplineDeformation(ANTSCommand):
 
-    """ Use ACWEReg bspline random deformation tool to generate
+    """ Use RegSeg bspline random deformation tool to generate
     a deformation field and apply the deformation to the target
     images.
 
@@ -144,7 +144,7 @@ class FieldBasedWarpOutputSpec(TraitedSpec):
 
 class FieldBasedWarp(ANTSCommand):
 
-    """ Use ACWEReg bspline random deformation tool to generate
+    """ Use RegSeg bspline random deformation tool to generate
     a deformation field and apply the deformation to the target
     images.
 

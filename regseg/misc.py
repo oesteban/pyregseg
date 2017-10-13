@@ -4,12 +4,12 @@
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 
 """
-misc.py - Miscelaneous helpers for ACWEReg
+misc.py - Miscelaneous helpers for RegSeg
 
 Copyright (c) 2013, code@oscaresteban.es (Oscar Esteban),
                     with Biomedical Image Technology, UPM (BIT-UPM)
 All rights reserved.
-This file is part of ACWEReg.
+This file is part of RegSeg.
 
 """
 import os.path as op

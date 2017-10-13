@@ -5,8 +5,8 @@
 #
 # @Author: oesteban - code@oscaresteban.es
 # @Date:   2014-03-28 20:38:30
-# @Last Modified by:   Oscar Esteban
-# @Last Modified time: 2015-03-18 17:03:44
+# @Last Modified by:   oesteban
+# @Last Modified time: 2017-10-13 14:35:59
 
 import os
 import os.path as op
@@ -22,8 +22,8 @@ from nipype.interfaces.ants import N4BiasFieldCorrection
 
 from nipype.workflows.dmri.fsl.utils import b0_average
 
-from pyacwereg.interfaces.acwereg import ACWEReg, ACWEReport
-from pyacwereg.interfaces.warps import FieldBasedWarp, InverseField
+from ..interfaces.regseg import RegSeg, RegSegReport
+from ..interfaces.warps import FieldBasedWarp, InverseField
 
 
 def regseg_wf(name='REGSEG', enhance_inputs=True, usemask=False):
@@ -48,8 +48,8 @@ def regseg_wf(name='REGSEG', enhance_inputs=True, usemask=False):
     options = pe.Node(nio.JSONFileGrabber(), name='LoadOptions')
 
     # Registration
-    regseg = pe.Node(ACWEReg(), name="ACWERegistration")
-    report = pe.Node(ACWEReport(), name="ACWEReport")
+    regseg = pe.Node(RegSeg(), name="RegSeg")
+    report = pe.Node(RegSegReport(), name="RegSegReport")
 
     # Connect
     wf.connect([
@@ -94,7 +94,7 @@ def regseg_wf(name='REGSEG', enhance_inputs=True, usemask=False):
 
 
 def default_regseg(name='REGSEGDefault'):
-    from pyacwereg import data
+    from regseg import data
 
     wf = regseg_wf(name=name, enhance_inputs=False)
     wf.inputs.inputnode.options = data.get('regseg_default.json')
@@ -399,7 +399,7 @@ def _get_last(inlist):
 
 
 def _default_params(enc_dir):
-    from pyacwereg import data
+    from regseg import data
     if len(enc_dir) == 2:
         enc_dir = enc_dir[0]
     return data.get('t2b_params')[enc_dir]

@@ -3,20 +3,20 @@
 # @Author: oesteban
 # @Date:   2014-11-19 09:46:07
 # @Last Modified by:   oesteban
-# @Last Modified time: 2015-06-30 11:52:39
+# @Last Modified time: 2017-10-13 14:26:43
 import os
 import os.path as op
 from glob import glob
 import nibabel as nb
 import numpy as np
 
+from nipype import logging
 from nipype.interfaces.base import (BaseInterface, traits, TraitedSpec, File,
                                     InputMultiPath, OutputMultiPath,
                                     BaseInterfaceInputSpec, isdefined,
                                     DynamicTraitedSpec, Directory,
                                     CommandLine, CommandLineInputSpec)
 
-from nipype import logging
 iflogger = logging.getLogger('interface')
 
 
@@ -142,7 +142,7 @@ class SlicesGridplot(BaseInterface):
     output_spec = SlicesGridplotOutputSpec
 
     def _run_interface(self, runtime):
-        from pyacwereg import viz
+        from .. import viz
 
         if self.inputs.view == 'all':
             view = ['axial', 'coronal', 'sagittal']
@@ -353,7 +353,7 @@ class SigmoidFilter(BaseInterface):
 
     Example
     -------
-    >>> from pyacwereg.interfaces.utility import SigmoidFilter
+    >>> from regseg.interfaces.utility import SigmoidFilter
     >>> enh = SigmoidFilter()
     >>> enh.inputs.in_file = 'T2.nii.gz'
     >>> result = enh.run() # doctest: +SKIP
@@ -363,7 +363,7 @@ class SigmoidFilter(BaseInterface):
     output_spec = SigmoidFilterOutputSpec
 
     def _run_interface(self, runtime):
-        from pyacwereg.filters import sigmoid_filter
+        from ..filters import sigmoid_filter
 
         im = nb.load(self.inputs.in_file)
         msk = None
