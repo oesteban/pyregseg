@@ -1,5 +1,5 @@
 # Use Ubuntu Trusty LTS
-FROM oesteban/regseg-core:latest
+FROM oesteban/regseg:latest
 
 # Installing and setting up miniconda
 RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh && \
