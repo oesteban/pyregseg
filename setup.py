@@ -3,12 +3,14 @@
 # @Author: oesteban
 # @Date:   2015-11-19 16:44:27
 # @Last Modified by:   oesteban
-# @Last Modified time: 2017-10-13 14:05:31
+# @Last Modified time: 2017-10-13 15:08:22
 """ regseg setup script """
+from __future__ import print_function, division, absolute_import, unicode_literals
 
 
 def main():
     """ Install entry-point """
+    from sys import version_info
     from setuptools import setup, find_packages
     from regseg.__about__ import (
         __version__,
@@ -27,6 +29,11 @@ def main():
         TESTS_REQUIRES,
         EXTRA_REQUIRES,
     )
+
+    package_data = {'regseg': ['data/*.json', 'data/*.txt']}
+    if version_info[0] < 3:
+        package_data = {key.encode(): [v.encode() for v in val]
+                        for key, val in list(package_data.items())}
 
     setup(
         name=PACKAGE_NAME,
@@ -47,7 +54,7 @@ def main():
         url=__url__,
         download_url=__download__,
         packages=find_packages(exclude=['*.tests']),
-        package_data={'regseg': ['data/*.json', 'data/*.txt']},
+        package_data=package_data,
         entry_points={
             'console_scripts': [],  # format 'mriqc=mriqc.bin.mriqc_run:main'
         },
