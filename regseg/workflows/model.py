@@ -11,13 +11,12 @@ import os.path as op
 from nipype.pipeline import engine as pe             # pipeline engine
 from nipype.interfaces import io as nio              # Data i/o
 from nipype.interfaces import utility as niu         # utility
-from nipype.interfaces import fsl
 from nipype.interfaces import freesurfer as fs
 from nipype.algorithms.misc import NormalizeProbabilityMapSet as Normalize
 
 from .surfaces import extract_surface
 from ..interfaces import phantoms as pip
-
+from ..interfaces.nilearn import Split
 from ..interfaces.warps import (RandomBSplineDeformation,
                                 FieldBasedWarp, InverseField)
 from ..interfaces.utility import Surf2Vol
@@ -47,7 +46,7 @@ def generate_phantom(name='PhantomGeneration'):
         name='refnode')
 
     model = pe.Node(pip.Phantom(), name='GenerateModel')
-    split = pe.Node(fsl.Split(dimension='t'), name='Split')
+    split = pe.Node(Split(), name='Split')
     selm0 = pe.Node(niu.Split(splits=[1, 2], squeeze=True),
                     name='SepModel0')
     selm1 = pe.Node(niu.Split(splits=[1, 1, 1], squeeze=True),

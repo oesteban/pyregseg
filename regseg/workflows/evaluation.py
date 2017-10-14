@@ -19,9 +19,9 @@ from nipype.algorithms import misc as namisc         # misc algorithms
 from nipype.algorithms.misc import NormalizeProbabilityMapSet as Normalize
 from nipype.algorithms import mesh as namesh
 from nipype.algorithms import metrics as namev
-from nipype.interfaces import fsl as fsl
 from nipype.interfaces import freesurfer as fs
 
+from ..interfaces.nilearn import Merge
 from ..interfaces.warps import InverseField
 from ..interfaces.utility import (ExportSlices, HausdorffDistance,
                                   ComputeEnergy)
@@ -216,8 +216,8 @@ def registration_ev(name='EvaluateMapping'):
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['out_file', 'out_tpm_diff', 'out_field_err']),
         name='outputnode')
-    merge_ref = pe.Node(fsl.Merge(dimension='t'), name='ConcatRefInputs')
-    merge_tst = pe.Node(fsl.Merge(dimension='t'), name='ConcatTestInputs')
+    merge_ref = pe.Node(Merge(), name='ConcatRefInputs')
+    merge_tst = pe.Node(Merge(), name='ConcatTestInputs')
     overlap = pe.Node(namev.FuzzyOverlap(weighting='volume'), name='Overlap')
     diff_im = pe.Node(namev.Similarity(metric='cc'), name='ContrastDiff')
     inv_fld = pe.Node(InverseField(), name='InvertField')

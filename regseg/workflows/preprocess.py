@@ -13,8 +13,8 @@ def preprocess(name='Preprocessing'):
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
     from nipype.interfaces import io as nio
-    from nipype.interfaces import fsl
 
+    from ..interfaces.nilearn import Split, Merge
     from .fieldmap import bmap_registration
     from .surfaces import all_surfaces
 
@@ -53,10 +53,9 @@ def preprocess(name='Preprocessing'):
     bmap_prep = bmap_registration()
     surfs = all_surfaces()
 
-    dwisplit = pe.Node(fsl.Split(dimension='t'), name='SplitDWIs')
+    dwisplit = pe.Node(Split(), name='SplitDWIs')
     wdwi = warp_dwi()
-    dwimerge = pe.Node(fsl.Merge(dimension='t', output_type='NIFTI'),
-                       name='MergeDWIs')
+    dwimerge = pe.Node(Merge(), name='MergeDWIs')
 
     wf = pe.Workflow(name=name)
     wf.connect([
@@ -77,7 +76,7 @@ def preprocess(name='Preprocessing'):
         (surfs,           wdwi, [('outputnode.out_surf', 'inputnode.surf')]),
         (ds,        outputnode, [(f, f) for f in ds_fields]),
         (wdwi,        dwimerge, [('outputnode.dwis', 'in_files')]),
-        (dwimerge,  outputnode, [('merged_file', 'warped_dwi')]),
+        (dwimerge,  outputnode, [('out_file', 'warped_dwi')]),
         (wdwi,      outputnode, [('outputnode.dwi_mask', 'warped_msk'),
                                  ('outputnode.surf', 'warped_surf')]),
         (bmap_prep, outputnode, [('outputnode.wrapped', 'bmap_wrapped')]),

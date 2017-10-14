@@ -57,6 +57,7 @@ REQUIRES = [
     'seaborn',
     'nipype',
     'phantomas',
+    'nilearn',
 ]
 
 LINKS_REQUIRES = [

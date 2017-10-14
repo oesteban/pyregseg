@@ -22,10 +22,8 @@ import os
 import os.path as op
 import nipype.pipeline.engine as pe             # pipeline engine
 from nipype.interfaces import utility as niu    # utility
-from nipype.interfaces import fsl               # fsl
-from nipype.interfaces import freesurfer as fs  # freesurfer
-from nipype.interfaces import ants              # ANTS
-
+from nipype.interfaces import freesurfer as fs  # Freesurfer
+from ..interfaces.nilearn import Binarize
 
 def extract_surface(name='GenSurface'):
     """ A nipype workflow for surface extraction from ``labels`` in a segmentation.
@@ -47,7 +45,7 @@ freesurfer/2013-June/030586.html>
         name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['out_surf', 'out_binary']), name='outputnode')
-    binarize = pe.Node(fs.Binarize(), name='BinarizeLabels')
+    binarize = pe.Node(Binarize(), name='BinarizeLabels')
     fill = pe.Node(niu.Function(
         function=_fillmask, input_names=['in_file', 'in_filled'],
         output_names=['out_file']), name='FillMask')
@@ -70,7 +68,7 @@ freesurfer/2013-June/030586.html>
         (inputnode,   fixVTK,     [('norm', 'in_ref')]),
         (inputnode,   pretess,    [('norm', 'in_norm')]),
         (inputnode,   fill,       [('in_filled', 'in_filled')]),
-        (binarize,    fill,       [('binary_file', 'in_file')]),
+        (binarize,    fill,       [('out_file', 'in_file')]),
         (fill,        pretess,    [('out_file', 'in_filled')]),
         (pretess,     tess,       [('out_file', 'in_file')]),
         (tess,        smooth,     [('surface', 'in_file')]),
