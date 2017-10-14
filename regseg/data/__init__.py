@@ -16,25 +16,20 @@
 
 """
 from __future__ import print_function, division, absolute_import, unicode_literals
+from pkg_resources import resource_filename as pkgrf
 
-import os.path as op
-
-data_path = op.abspath(op.dirname(op.realpath(__file__)))
-
-p_paths = dict()
-folders = dict()
-
-for key in ['x', 'y', 'z']:
-    p_paths[key] = op.join(data_path, 't2b_elastix_%s.txt' % key)
-
-folders['t2b_params'] = p_paths
-folders['regseg_hcp'] = op.join(data_path, 'regseg_hcp.json')
-folders['regseg_default'] = op.join(data_path, 'regseg_default.json')
-folders['model_labels'] = op.join(data_path, 'model_labels.json')
-
+folders = {
+    't2b_params': {i: pkgrf('regseg', 'data/t2b_elastix_%s.txt' % i)
+                   for i in ['x', 'y', 'z']},
+    'regseg_hcp': pkgrf('regseg', 'data/regseg_hcp.json'),
+    'regseg_default': pkgrf('regseg', 'data/regseg_default.json'),
+    'model_labels': pkgrf('regseg', 'data/model_labels.json'),
+}
 
 def get(value):
+    """Get a particular data resource"""
     if value not in folders:
-        raise RuntimeError('Requested data resource does not exist')
+        raise RuntimeError('Requested data resource "%s" does not exist' % value)
     else:
         return folders[value]
+

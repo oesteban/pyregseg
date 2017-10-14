@@ -97,7 +97,7 @@ def default_regseg(name='REGSEGDefault'):
     from regseg import data
 
     wf = regseg_wf(name=name, enhance_inputs=False)
-    wf.inputs.inputnode.options = data.get('regseg_default.json')
+    wf.inputs.inputnode.options = data.get('regseg_default')
     return wf
 
 
