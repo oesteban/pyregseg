@@ -19,6 +19,7 @@ dependencies:
     - mkdir -p ~/data/ ~/.docker
     # Create scratch folder and force group permissions
     - mkdir -p $SCRATCH && sudo setfacl -d -m group:ubuntu:rwx $SCRATCH && sudo setfacl -m group:ubuntu:rwx $SCRATCH
+    - if [[ "${CIRCLE_TAG}" != "" ]]; then sed -i -E "s/(__version__ = )'[A-Za-z0-9.-]+'/\1'$CIRCLE_TAG'/" regseg/__about__.py; fi
     # - if [[ ! -d ~/data/${TEST_DATA_NAME} ]]; then wget --retry-connrefused --waitretry=5 --read-timeout=20 --timeout=15 -t 0 -q -O ${TEST_DATA_NAME}.tar.gz "${TEST_DATA_URL}" && tar xzf ${TEST_DATA_NAME}.tar.gz -C ~/data/; fi
     - docker load --input $HOME/.docker/cache.tar || true
   override:
@@ -43,12 +44,6 @@ deployment:
   production:
     tag: /.*/
     commands:
-      - |
-        if [[ "$PYPI_PASS" != "" ]]; then
-            printf "[distutils]\nindex-servers =\n    pypi\n\n[pypi]\nusername:$PYPI_USER\npassword:$PYPI_PASS\n" > ~/.pypirc
-            python setup.py sdist upload -r pypi
-        fi
-
       - ? |
           if [[ -n "$DOCKER_PASS" ]]; then
               VERSION_EXTRA=$(echo ${CIRCLE_TAG} | cut -d '-' -f 2)
@@ -64,3 +59,9 @@ deployment:
           fi 
         :
           timeout: 21600
+      - |
+        if [[ "$PYPI_PASS" != "" ]]; then
+            printf "[distutils]\nindex-servers =\n    pypi\n\n[pypi]\nusername:$PYPI_USER\npassword:$PYPI_PASS\n" > ~/.pypirc
+            python setup.py sdist upload -r pypi
+        fi
+
