@@ -108,7 +108,7 @@ class SimulateSMRI(CommandLine):
     """
     input_spec = SimulateSMRIInputSpec
     output_spec = SimulateSMRIOutputSpec
-    cmd = 'phantomas_struct_fiberless'
+    _cmd = 'phantomas_struct_fiberless'
 
     def _list_outputs(self):
         outputs = self._outputs().get()

@@ -18,40 +18,9 @@ import os
 import os.path as op
 
 
-def phantoms_wf(options, cfg):
-    import glob
-    import nipype.pipeline.engine as pe
-    from nipype import config, logging
-    from nipype.interfaces import utility as niu
-    from regseg.workflows import evaluation as ev
-
-    config.update_config(cfg)
-    logging.update_logging(config)
-
-    grid_size = options.grid_size
-    if len(grid_size) == 1:
-        grid_size = grid_size * 3
-
-    bs = ev.bspline(name=options.name, shapes=options.shape,
-                    snr_list=options.snr,
-                    N=options.repetitions)
-    bs.inputs.inputnode.grid_size = grid_size
-    bs.inputs.inputnode.lo_matrix = options.lo_matrix
-    bs.inputs.inputnode.hi_matrix = options.hi_matrix
-    bs.inputs.inputnode.cortex = options.no_cortex
-
-    if options.out_csv is None:
-        bs.inputs.inputnode.out_csv = op.join(
-            options.work_dir, bs.name, 'results.csv')
-    else:
-        bs.inputs.inputnode.out_csv = options.out_csv
-
-    return bs
-
-if __name__ == '__main__':
+def get_parser():
     from argparse import ArgumentParser
     from argparse import RawTextHelpFormatter
-    from shutil import copyfileobj
 
     parser = ArgumentParser(description='Run evaluation workflow',
                             formatter_class=RawTextHelpFormatter)
@@ -64,7 +33,7 @@ if __name__ == '__main__':
         choices=['gyrus', 'ball', 'L', 'box'],
         help='selects phantom\'s shape model')
     g_input.add_argument(
-        '-n', '--snr', action='store', default=400, nargs='+', type=int,
+        '-n', '--snr', action='store', nargs='+', type=int,
         help='generate signal with certain SNR')
     g_input.add_argument(
         '--no_cortex', action='store_false',
@@ -104,9 +73,38 @@ if __name__ == '__main__':
     ################################
     g_output = parser.add_argument_group('Outputs')
     g_output.add_argument(
-        '-o', '--out_csv', action='store', help='output summary csv file')
+        '-o', '--out_csv', action='store', default='phantoms_summary.csv',
+        help='output summary csv file')
+    return parser
 
-    options = parser.parse_args()
+
+def phantoms_wf(options, cfg):
+    import glob
+    import nipype.pipeline.engine as pe
+    from nipype import config, logging
+    from nipype.interfaces import utility as niu
+    from regseg.workflows import evaluation as ev
+
+    config.update_config(cfg)
+    logging.update_logging(config)
+
+    grid_size = options.grid_size
+    if len(grid_size) == 1:
+        grid_size = grid_size * 3
+
+    bs = ev.bspline(name=options.name, shapes=options.shape,
+                    snr_list=options.snr,
+                    N=options.repetitions)
+    bs.inputs.inputnode.grid_size = grid_size
+    bs.inputs.inputnode.lo_matrix = options.lo_matrix
+    bs.inputs.inputnode.hi_matrix = options.hi_matrix
+    bs.inputs.inputnode.cortex = options.no_cortex
+    bs.inputs.inputnode.out_csv = options.out_csv
+    return bs
+
+if __name__ == '__main__':
+    from shutil import copyfileobj
+    options = get_parser().parse_args()
 
     # Setup multiprocessing
     nthreads = options.nthreads
@@ -126,15 +124,9 @@ if __name__ == '__main__':
 
     # Setup logging dir
     log_dir = op.abspath('logs')
-    cfg['logging'] = {'log_directory': log_dir, 'log_to_file': True,
-                      'workflow_level': 'INFO', 'interface_level': 'INFO'}
+    cfg['logging'] = {'log_directory': log_dir, 'log_to_file': True}
     if not op.exists(log_dir):
         os.makedirs(log_dir)
-
-    # Setup debug mode
-    if options.debug:
-        cfg['logging']['workflow_level'] = 'DEBUG'
-        cfg['logging']['interface_level'] = 'DEBUG'
 
     wf = phantoms_wf(options, cfg)
     wf.base_dir = options.work_dir

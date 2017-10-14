@@ -26,16 +26,9 @@ from ..interfaces.regseg import RegSeg, RegSegReport
 from ..interfaces.warps import FieldBasedWarp, InverseField
 
 
-def regseg_wf(name='REGSEG', enhance_inputs=True, usemask=False):
+def regseg_wf(regseg_options, name='REGSEG', enhance_inputs=True, usemask=False):
     wf = pe.Workflow(name=name)
-
-    regseg_inputs = ['iterations', 'alpha', 'beta', 'step_size',
-                     'grid_spacing', 'convergence_energy',
-                     'convergence_window', 'f_smooth',
-                     'images_verbosity', 'scales', 'descript_update',
-                     'convergence_value', 'descript_adaptative']
-
-    wf_inputs = ['in_fixed', 'in_surf', 'in_mask', 'options']
+    wf_inputs = ['in_fixed', 'in_surf', 'in_mask']
     inputnode = pe.Node(niu.IdentityInterface(
                         fields=wf_inputs), name='inputnode')
 
@@ -44,17 +37,12 @@ def regseg_wf(name='REGSEG', enhance_inputs=True, usemask=False):
                 'out_field']),
         name='outputnode')
 
-    # Load options
-    options = pe.Node(nio.JSONFileGrabber(), name='LoadOptions')
-
     # Registration
-    regseg = pe.Node(RegSeg(), name="RegSeg")
+    regseg = pe.Node(RegSeg(from_file=regseg_options), name="RegSeg")
     report = pe.Node(RegSegReport(), name="RegSegReport")
 
     # Connect
     wf.connect([
-        (inputnode,  options, [('options', 'in_file')]),
-        (options,     regseg, [(f, f) for f in regseg_inputs]),
         (inputnode,   regseg, [('in_surf', 'in_prior')]),
         (regseg,      report, [('out_log', 'in_log')]),
         (regseg,  outputnode, [('out_warped', 'out_corr'),
@@ -95,10 +83,8 @@ def regseg_wf(name='REGSEG', enhance_inputs=True, usemask=False):
 
 def default_regseg(name='REGSEGDefault'):
     from regseg import data
-
-    wf = regseg_wf(name=name, enhance_inputs=False)
-    wf.inputs.inputnode.options = data.get('regseg_default')
-    return wf
+    return regseg_wf(data.get('regseg_default'), 
+                     name=name, enhance_inputs=False)
 
 
 def sdc_t2b(name='SDC_T2B', icorr=True, num_threads=1):

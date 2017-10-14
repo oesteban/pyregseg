@@ -1,6 +1,10 @@
 # Use Ubuntu Trusty LTS
 FROM oesteban/regseg:latest
 
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends git graphviz && \
+    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
 # Installing and setting up miniconda
 RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh && \
     bash Miniconda2-latest-Linux-x86_64.sh -b -p /usr/local/miniconda && \
@@ -35,7 +39,10 @@ RUN conda install -c conda-forge -y openblas=0.2.19; \
 
 
 WORKDIR /src/pyregseg
+COPY requirements.txt /src/pyregseg
+RUN pip install -r requirements.txt 
+
 COPY . /src/pyregseg/
 RUN pip install .[all]
 
-WORKDIR /scratch
+WORKDIR /work

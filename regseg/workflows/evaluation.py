@@ -30,13 +30,15 @@ from .registration import identity_wf, default_regseg
 
 
 def bspline(name='BSplineEvaluation', shapes=['gyrus'], snr_list=[300],
-            N=1, methods=None, results=None):
+            N=1, methods=None):
     """ A workflow to evaluate registration methods generating a gold standard
     with random bspline deformations.
 
     A list of nipype workflows can be plugged-in, using the methods input. If
     methods is None, then a default regseg method is run.
 
+
+      methods = [identity_wf(n_tissues=2), default_regseg()]
 
     Inputs in methods workflows
     ---------------------------
@@ -59,22 +61,19 @@ def bspline(name='BSplineEvaluation', shapes=['gyrus'], snr_list=[300],
 
     """
     wf = pe.Workflow(name=name)
-
-    if methods is None:
-        # methods = [identity_wf(n_tissues=2), default_regseg()]
-        methods = [default_regseg()]
-    else:
-        methods = np.atleast_1d(methods).tolist()
-
     inputnode = pe.Node(niu.IdentityInterface(
         fields=['grid_size', 'out_csv', 'lo_matrix', 'rep_id',
                 'hi_matrix', 'snr', 'cortex', 'shape']),
         name='inputnode')
 
-    shapes = np.atleast_1d(shapes).tolist()
-    inputnode.iterables = [('shape', shapes),
-                           ('snr', snr_list),
-                           ('rep_id', range(N))]
+    inputnode.iterables = [('shape', ['gyrus']),
+                           ('snr', [400]),
+                           ('rep_id', [0]),
+    ]
+
+    # inputnode.iterables = [('shape', np.atleast_1d(shapes).tolist()),
+    #                        ('snr', snr_list),
+    #                        ('rep_id', list(range(N)))]
 
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['out_file', 'out_tpms', 'out_surfs', 'out_field', 'out_coeff',
@@ -113,10 +112,9 @@ def bspline(name='BSplineEvaluation', shapes=['gyrus'], snr_list=[300],
         (phantom, regseg_low, [
             ('refnode.out_surfs', 'inputnode.in_surf'),
             ('out_lowres.out_signal', 'inputnode.in_fixed'),
-            ('out_lowres.out_tpms', 'inputnode.in_tpms'),
             ('out_lowres.out_mask', 'inputnode.in_mask')]),
-        (regseg_low, norm_low, [
-            ('outputnode.out_tpms', 'in_files')]),
+        # (regseg_low, norm_low, [
+        #     ('outputnode.out_tpms', 'in_files')]),
         (regseg_low, ev_regseg_low, [
             ('outputnode.out_corr', 'tstnode.in_imag'),
             ('outputnode.out_surf', 'tstnode.in_surf'),
@@ -128,18 +126,11 @@ def bspline(name='BSplineEvaluation', shapes=['gyrus'], snr_list=[300],
         (sel0, export0, [
             ('out', 'reference')]),
         (phantom, export0, [
-            ('out_lowres.out_surfs', 'surfaces0')]),
+            ('out_lowres.out_surfs', 'sgreen')]),
         (regseg_low, export0, [
-            ('outputnode.out_surf', 'surfaces1')])
+            ('outputnode.out_surf', 'syellow')]),
+        (inputnode, ev_regseg_low, [('out_csv', 'infonode.out_csv')])
     ])
-
-    # Connect results output file
-    if results is not None:
-        ev_regseg_low.inputs.infonode.out_csv = results
-    else:
-        wf.connect([
-            (inputnode, ev_regseg_low, [('out_csv', 'infonode.out_csv')])
-        ])
 
     regseg_hi = default_regseg('REGSEG_hi')
     ev_regseg_hi = registration_ev(name=('Ev_%s' % regseg_hi.name))
@@ -163,10 +154,9 @@ def bspline(name='BSplineEvaluation', shapes=['gyrus'], snr_list=[300],
         (phantom, regseg_hi, [
             ('refnode.out_surfs', 'inputnode.in_surf'),
             ('out_hires.out_signal', 'inputnode.in_fixed'),
-            ('out_hires.out_tpms', 'inputnode.in_tpms'),
             ('out_hires.out_mask', 'inputnode.in_mask')]),
-        (regseg_hi, norm_hi, [
-            ('outputnode.out_tpms', 'in_files')]),
+        # (regseg_hi, norm_hi, [
+        #     ('outputnode.out_tpms', 'in_files')]),
         (regseg_hi, ev_regseg_hi, [
             ('outputnode.out_corr', 'tstnode.in_imag'),
             ('outputnode.out_surf', 'tstnode.in_surf'),
@@ -178,18 +168,11 @@ def bspline(name='BSplineEvaluation', shapes=['gyrus'], snr_list=[300],
         (sel0, export1, [
             ('out', 'reference')]),
         (phantom, export1, [
-            ('out_hires.out_surfs', 'surfaces0')]),
+            ('out_hires.out_surfs', 'sgreen')]),
         (regseg_hi, export1, [
-            ('outputnode.out_surf', 'surfaces1')])
+            ('outputnode.out_surf', 'syellow')]),
+        (inputnode, ev_regseg_hi, [('out_csv', 'infonode.out_csv')])
     ])
-
-    # Connect results output file
-    if results is not None:
-        ev_regseg_hi.inputs.infonode.out_csv = results
-    else:
-        wf.connect([
-            (inputnode, ev_regseg_hi, [('out_csv', 'infonode.out_csv')])
-        ])
 
     # Connect in_field in case it is an identity workflow
     # if 'in_field' in [item[0] for item in reg.inputs.inputnode.items()]:

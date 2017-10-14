@@ -1,0 +1,2 @@
+git+https://github.com/oesteban/nipype.git@a24db85b85ff8b60fa3bb561f617e45e534cb5aa#egg=nipype-0.13.2
+git+https://github.com/oesteban/phantomas.git@1f512c770a44f10192ed3bb6b5772f4984627474#egg=phantomas-1.0.0

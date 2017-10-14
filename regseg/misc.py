@@ -43,15 +43,14 @@ def sort_surfs(surfs):
 
 
 def ball(volsize, radius, dims=3):
-    volsize = np.array(volsize)
-    if volsize.ndim == 0:
-        volsize = np.ones(shape=(dims)) * volsize
+    if not isinstance(volsize, (list, tuple)):
+        volsize = [volsize] * dims
 
     assert np.all(volsize > 0)
-    assert float(radius) < (float(volsize.min()) * 0.5)
+    assert radius < min(volsize) * 0.5
 
     result = np.zeros(shape=tuple(volsize), dtype=int)
-    center = (volsize - 1) * 0.5
+    center = (np.array(volsize) - 1) * 0.5
 
     for x in range(0, int(volsize[0])):
         for y in range(0, int(volsize[1])):
