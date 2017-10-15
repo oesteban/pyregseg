@@ -89,6 +89,9 @@ class BinarizeInputSpec(BaseInterfaceInputSpec):
                    desc='input file')
     threshold = traits.Float(0.0, usedefault=True,
                              desc='threshold')
+    match = traits.List(traits.Int,
+                        desc='match instead of threshold')
+
 
 class BinarizeOutputSpec(TraitedSpec):
     out_file = File(exists=True, desc='output binary mask')
@@ -104,13 +107,17 @@ class Binarize(SimpleInterface):
 
         nii = nb.load(self.inputs.in_file)
         data = nii.get_data()
-        data[data < self.inputs.threshold] = 0
-        data[data >= self.inputs.threshold] = 1
+        mask = np.zeros_like(data, dtype=np.uint8)
         hdr = nii.header.copy()
         hdr.set_data_dtype(np.uint8)
-        new = nii.__class__(data.astype(np.uint8),
-                            nii.affine, hdr)
-        new.to_filename(self._results['out_file'])
 
+        if isdefined(self.inputs.match) and self.inputs.match:
+            for label in self.inputs.match:
+                mask[data == label] = 1
+        else:
+            mask[data >= self.inputs.threshold] = 1
+
+        new = nii.__class__(mask, nii.affine, hdr)
+        new.to_filename(self._results['out_file'])
         return runtime
 

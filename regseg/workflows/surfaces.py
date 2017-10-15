@@ -24,6 +24,7 @@ import nipype.pipeline.engine as pe             # pipeline engine
 from nipype.interfaces import utility as niu    # utility
 from nipype.interfaces import freesurfer as fs  # Freesurfer
 from ..interfaces.nilearn import Binarize
+from ..interfaces.surfaces import FixVTK
 
 def extract_surface(name='GenSurface'):
     """ A nipype workflow for surface extraction from ``labels`` in a segmentation.
@@ -57,9 +58,7 @@ freesurfer/2013-June/030586.html>
                      name='rename')
 
     tovtk = pe.Node(fs.MRIsConvert(out_datatype='vtk'), name='toVTK')
-    fixVTK = pe.Node(niu.Function(
-        input_names=['in_file', 'in_ref'], output_names=['out_file'],
-        function=_fixvtk), name='fixVTK')
+    fixVTK = pe.Node(FixVTK(), name='fixVTK')
 
     wf = pe.Workflow(name=name)
     wf.connect([
@@ -187,53 +186,4 @@ def _fillmask(in_file, in_filled=None):
     out_file = op.abspath('mask_filled.nii.gz')
     nb.Nifti1Image(data.astype(np.uint8), nii.get_affine(),
                    nii.get_header()).to_filename(out_file)
-    return out_file
-
-
-def _fixvtk(in_file, in_ref, out_file=None):
-    """
-    Transforms a vtk file from Freesurfer's *tkRAS* coordinates
-    to a target image in *scannerRAS* coordinates.
-    """
-    import nibabel as nb
-    import numpy as np
-    import os.path as op
-    import subprocess as sp
-
-    if out_file is None:
-        fname, ext = op.splitext(op.basename(in_file))
-        if ext == ".gz":
-            fname, _ = op.splitext(fname)
-
-        out_file = op.abspath("%s_fixed.vtk" % fname)
-
-    ref = nb.load(in_ref)
-    cmd_info = "mri_info %s  --tkr2scanner" % in_ref
-    proc = sp.Popen(cmd_info, stdout=sp.PIPE, shell=True)
-    data = bytearray(proc.stdout.read())
-    if 'niiRead' in data:
-        _, data = data.split('\n', 1)
-
-    mstring = np.fromstring(data.decode("utf-8"), sep='\n')
-    matrix = np.reshape(mstring, (4, -1))
-
-    with open(in_file, 'r') as f:
-        with open(out_file, 'w+') as w:
-            npoints = 0
-            pointid = -5
-
-            for i, l in enumerate(f):
-                if (i == 4):
-                    s = l.split()
-                    npoints = int(s[1])
-                    fmt = np.dtype(s[2])
-                elif((i > 4) and (pointid < npoints)):
-                    vert = [float(x) for x in l.split()]
-                    vert.append(1.0)
-                    newvert = np.dot(matrix, vert)
-                    l = '%.9f  %.9f  %.9f\n' % tuple(newvert[0:3])
-
-                w.write(l)
-                pointid = pointid + 1
-
     return out_file
