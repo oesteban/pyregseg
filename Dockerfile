@@ -83,7 +83,7 @@ RUN conda install -c conda-forge -y openblas=0.2.19; \
 
 
 WORKDIR /src/pyregseg
-COPY requirements.txt /src/pyregseg
+COPY requirements.txt /src/pyregseg/requirements.txt
 RUN pip install -r requirements.txt 
 
 COPY . /src/pyregseg/
