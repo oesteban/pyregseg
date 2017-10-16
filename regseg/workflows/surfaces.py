@@ -92,9 +92,9 @@ def extract_surfaces_model(model, name='Surfaces', gen_outer=False):
 
     model_classes = list(labels.keys())
     exsurfs = extract_surface()
-    exsurfs.iterables = [
-        ('inputnode.name', model_classes),
-        ('inputnode.labels', [v for _, v in list(labels.items())]),
+    exsurfs.get_node('inputnode').iterables = [
+        ('name', model_classes),
+        ('labels', [v for _, v in list(labels.items())]),
     ]
 
     wf = pe.Workflow(name=name)
