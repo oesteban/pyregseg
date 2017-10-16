@@ -80,20 +80,21 @@ def extract_surfaces_model(model, name='Surfaces', gen_outer=False):
     """Extracts surfaces as prescribed by the model ``model``"""
     import simplejson as json
     from .. import data
+    from pkg_resources import resource_filename as pkgrf
 
     inputnode = pe.Node(niu.IdentityInterface(
         fields=['aseg', 'norm', 'in_mask']), name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['out_surf']), name='outputnode')
 
-    with open(data.get(model), 'rb' if PY2 else 'r') as sfh:
+    with open(pkgrf('regseg', 'data/%s.json' % model), 'rb' if PY2 else 'r') as sfh:
         labels = json.load(sfh)
 
     model_classes = list(labels.keys())
     exsurfs = extract_surface()
-    exsurfs.inputs.inputnode.iterables = [
-        ('name', model_classes),
-        ('labels', [v for _, v in list(labels.items())]),
+    exsurfs.iterables = [
+        ('inputnode.name', model_classes),
+        ('inputnode.labels', [v for _, v in list(labels.items())]),
     ]
 
     wf = pe.Workflow(name=name)
