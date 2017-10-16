@@ -1,15 +1,8 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
-#
-# @Author: oesteban - code@oscaresteban.es
-# @Date:   2014-03-28 20:38:30
-# @Last Modified by:   oesteban
-# @Last Modified time: 2017-10-13 14:56:41
+""" Various registration alternatives for SDC """
 from __future__ import print_function, division, absolute_import, unicode_literals
-import os
-import os.path as op
 
 import nipype.pipeline.engine as pe             # pipeline engine
 from nipype.interfaces import io as nio              # Data i/o
@@ -27,6 +20,10 @@ from ..interfaces.warps import FieldBasedWarp, InverseField
 
 
 def regseg_wf(regseg_options, name='REGSEG', enhance_inputs=True, usemask=False):
+    """
+    A workflow to use regseg and generate the associated report
+    """
+
     wf = pe.Workflow(name=name)
     wf_inputs = ['in_fixed', 'in_surf', 'in_mask']
     inputnode = pe.Node(niu.IdentityInterface(
@@ -83,7 +80,7 @@ def regseg_wf(regseg_options, name='REGSEG', enhance_inputs=True, usemask=False)
 
 def default_regseg(name='REGSEGDefault'):
     from regseg import data
-    return regseg_wf(data.get('regseg_default'), 
+    return regseg_wf(data.get('regseg_default'),
                      name=name, enhance_inputs=False)
 
 
@@ -335,24 +332,19 @@ def apply_dfm(name='ApplyDFM', interp='spline', icorr=True,
 
 
 def _enh_image(in_file, irange=2000., out_file=None):
-    import numpy as np
     import nibabel as nb
-    import os.path as op
+    from nipype.utils.filemanip import fname_presuffix
 
     if out_file is None:
-        fname, fext = op.splitext(op.basename(in_file))
-        if fext == '.gz':
-            fname, _ = op.splitext(fname)
-        out_file = op.abspath('./%s_enh.nii.gz' % fname)
+        out_file = fname_presuffix(in_file, suffix='_enh')
 
     nii = nb.load(in_file)
     data = nii.get_data()
     data[data < 0] = 0.0
-    data[data > 1.0] = 0.0
-    imax = data.max()
+    imax = np.percentile(data.reshape(-1), 95)
     data = (irange / imax) * data
 
-    nb.Nifti1Image(data, nii.get_affine(), nii.get_header()).to_filename(
+    nb.Nifti1Image(data, nii.affine, nii.header).to_filename(
         out_file)
     return out_file
 
@@ -360,22 +352,19 @@ def _enh_image(in_file, irange=2000., out_file=None):
 def _gen_zmsk(in_file, out_file=None):
     import numpy as np
     import nibabel as nb
-    import os.path as op
+    from nipype.utils.filemanip import fname_presuffix
 
     if out_file is None:
-        fname, fext = op.splitext(op.basename(in_file))
-        if fext == '.gz':
-            fname, _ = op.splitext(fname)
-        out_file = op.abspath('./%s_zmsk.nii.gz' % fname)
+        out_file = fname_presuffix(in_file, suffix='_zmsk')
 
     nii = nb.load(in_file)
     msk = np.ones(nii.get_shape()[:3])
-    hdr = nii.get_header().copy()
+    hdr = nii.header.copy()
     hdr.set_data_shape(msk.shape)
     hdr.set_data_dtype(np.uint8)
     hdr.set_xyzt_units('mm')
 
-    nb.Nifti1Image(msk.astype(np.uint8), nii.get_affine(), hdr).to_filename(
+    nb.Nifti1Image(msk.astype(np.uint8), nii.affine, hdr).to_filename(
         out_file)
     return out_file
 
@@ -386,6 +375,4 @@ def _get_last(inlist):
 
 def _default_params(enc_dir):
     from regseg import data
-    if len(enc_dir) == 2:
-        enc_dir = enc_dir[0]
-    return data.get('t2b_params')[enc_dir]
+    return data.get('t2b_params')[enc_dir[0]]

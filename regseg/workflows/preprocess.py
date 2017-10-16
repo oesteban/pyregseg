@@ -1,9 +1,6 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# @Author: oesteban
-# @Date:   2015-03-02 14:48:33
-# @Last Modified by:   oesteban
-# @Last Modified time: 2017-10-13 14:56:34
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
 from __future__ import print_function, division, absolute_import, unicode_literals
 
 def preprocess(name='Preprocessing'):

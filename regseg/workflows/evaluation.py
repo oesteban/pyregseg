@@ -1,14 +1,8 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
-#
-# @Author: Oscar Esteban - code@oscaresteban.es
-# @Date:   2014-03-12 16:59:14
-# @Last Modified by:   oesteban
-# @Last Modified time: 2017-10-13 14:56:21
+"""Evaluating different SDC methods"""
 from __future__ import print_function, division, absolute_import, unicode_literals
-import os
 import os.path as op
 import numpy as np
 
@@ -16,170 +10,13 @@ import nipype.pipeline.engine as pe             # pipeline engine
 from nipype.interfaces import io as nio              # Data i/o
 from nipype.interfaces import utility as niu         # utility
 from nipype.algorithms import misc as namisc         # misc algorithms
-from nipype.algorithms.misc import NormalizeProbabilityMapSet as Normalize
 from nipype.algorithms import mesh as namesh
 from nipype.algorithms import metrics as namev
-from nipype.interfaces import freesurfer as fs
 
 from ..interfaces.nilearn import Merge
 from ..interfaces.warps import InverseField
-from ..interfaces.utility import (ExportSlices, HausdorffDistance,
+from ..interfaces.utility import (HausdorffDistance,
                                   ComputeEnergy)
-from ..workflows.model import generate_phantom
-from .registration import identity_wf, default_regseg
-
-
-def bspline(name='BSplineEvaluation', shapes=['gyrus'], snr_list=[300],
-            N=1, methods=None):
-    """ A workflow to evaluate registration methods generating a gold standard
-    with random bspline deformations.
-
-    A list of nipype workflows can be plugged-in, using the methods input. If
-    methods is None, then a default regseg method is run.
-
-
-      methods = [identity_wf(n_tissues=2), default_regseg()]
-
-    Inputs in methods workflows
-    ---------------------------
-
-    methods workflows must define the following inputs:
-        inputnode.in_surf - the input prior / surfaces in orig space
-        inputnode.in_dist - the distorted images
-        inputnode.in_tpms - the distorted TPMs (tissue probability maps)
-        inputnode.in_orig - the original images, undistorted
-
-
-    Outputs in methods workflows
-    ----------------------------
-
-        outputnode.out_corr - the distorted images, after correction
-        outputnode.out_tpms - the corrected TPMs
-        outputnode.out_surf - the original priors after distortion
-          (if available)
-        outputnode.out_disp - the displacement field, at image grid resoluton
-
-    """
-    wf = pe.Workflow(name=name)
-    inputnode = pe.Node(niu.IdentityInterface(
-        fields=['grid_size', 'out_csv', 'lo_matrix', 'rep_id',
-                'hi_matrix', 'snr', 'cortex', 'shape']),
-        name='inputnode')
-
-    inputnode.iterables = [('shape', ['gyrus']),
-                           ('snr', [400]),
-                           ('rep_id', [0]),
-    ]
-
-    # inputnode.iterables = [('shape', np.atleast_1d(shapes).tolist()),
-    #                        ('snr', snr_list),
-    #                        ('rep_id', list(range(N)))]
-
-    outputnode = pe.Node(niu.IdentityInterface(
-        fields=['out_file', 'out_tpms', 'out_surfs', 'out_field', 'out_coeff',
-                'out_overlap']), name='outputnode')
-
-    phantom = generate_phantom()
-    wf.connect([
-        (inputnode,  phantom, [('shape', 'inputnode.shape'),
-                               ('grid_size', 'inputnode.grid_size'),
-                               ('lo_matrix', 'inputnode.lo_matrix'),
-                               ('hi_matrix', 'inputnode.hi_matrix'),
-                               ('snr', 'inputnode.snr'),
-                               ('cortex', 'inputnode.cortex'),
-                               ('rep_id', 'inputnode.repetition_id')])
-    ])
-
-    regseg_low = default_regseg('REGSEG_low')
-    ev_regseg_low = registration_ev(name=('Ev_%s' % regseg_low.name))
-    ev_regseg_low.inputs.infonode.method = 'REGSEG'
-    ev_regseg_low.inputs.infonode.resolution = 'lo'
-    # norm_low = pe.Node(Normalize(), name='NormalizeFinal_low')
-    export0 = pe.Node(ExportSlices(all_axis=True), name='Export_lo')
-    sel0 = pe.Node(niu.Select(index=[0]), name='SelectT1w_lo')
-
-    wf.connect([
-        (inputnode, ev_regseg_low, [
-            ('shape', 'infonode.shape'),
-            ('snr', 'infonode.snr'),
-            ('rep_id', 'infonode.repetition')]),
-        (phantom, ev_regseg_low, [
-            ('refnode.out_signal',    'refnode.in_imag'),
-            ('refnode.out_tpms',    'refnode.in_tpms'),
-            ('out_lowres.out_surfs',   'refnode.in_surf'),
-            ('refnode.out_mask',    'refnode.in_mask'),
-            ('out_lowres.out_field', 'refnode.in_field')]),
-        (phantom, regseg_low, [
-            ('refnode.out_surfs', 'inputnode.in_surf'),
-            ('out_lowres.out_signal', 'inputnode.in_fixed'),
-            ('out_lowres.out_mask', 'inputnode.in_mask')]),
-        # (regseg_low, norm_low, [
-        #     ('outputnode.out_tpms', 'in_files')]),
-        (regseg_low, ev_regseg_low, [
-            ('outputnode.out_corr', 'tstnode.in_imag'),
-            ('outputnode.out_surf', 'tstnode.in_surf'),
-            ('outputnode.out_field', 'tstnode.in_field')]),
-        # (norm_low, ev_regseg_low, [
-        #     ('out_files', 'tstnode.in_tpms')]),
-        (phantom, sel0, [
-            ('out_lowres.out_signal', 'inlist')]),
-        (sel0, export0, [
-            ('out', 'reference')]),
-        (phantom, export0, [
-            ('out_lowres.out_surfs', 'sgreen')]),
-        (regseg_low, export0, [
-            ('outputnode.out_surf', 'syellow')]),
-        (inputnode, ev_regseg_low, [('out_csv', 'infonode.out_csv')])
-    ])
-
-    regseg_hi = default_regseg('REGSEG_hi')
-    ev_regseg_hi = registration_ev(name=('Ev_%s' % regseg_hi.name))
-    ev_regseg_hi.inputs.infonode.method = 'REGSEG'
-    ev_regseg_hi.inputs.infonode.resolution = 'hi'
-    # norm_hi = pe.Node(Normalize(), name='NormalizeFinal_hi')
-    export1 = pe.Node(ExportSlices(all_axis=True), name='Export_hi')
-    sel1 = pe.Node(niu.Select(index=[0]), name='SelectT1w_hi')
-
-    wf.connect([
-        (inputnode, ev_regseg_hi, [
-            ('shape', 'infonode.shape'),
-            ('snr', 'infonode.snr'),
-            ('rep_id', 'infonode.repetition')]),
-        (phantom, ev_regseg_hi, [
-            ('refnode.out_signal',    'refnode.in_imag'),
-            ('refnode.out_tpms',    'refnode.in_tpms'),
-            ('out_hires.out_surfs',   'refnode.in_surf'),
-            ('refnode.out_mask',    'refnode.in_mask'),
-            ('out_hires.out_field', 'refnode.in_field')]),
-        (phantom, regseg_hi, [
-            ('refnode.out_surfs', 'inputnode.in_surf'),
-            ('out_hires.out_signal', 'inputnode.in_fixed'),
-            ('out_hires.out_mask', 'inputnode.in_mask')]),
-        # (regseg_hi, norm_hi, [
-        #     ('outputnode.out_tpms', 'in_files')]),
-        (regseg_hi, ev_regseg_hi, [
-            ('outputnode.out_corr', 'tstnode.in_imag'),
-            ('outputnode.out_surf', 'tstnode.in_surf'),
-            ('outputnode.out_field', 'tstnode.in_field')]),
-        # (norm_hi, ev_regseg_hi, [
-        #     ('out_files', 'tstnode.in_tpms')]),
-        (phantom, sel1, [
-            ('out_hires.out_signal', 'inlist')]),
-        (sel0, export1, [
-            ('out', 'reference')]),
-        (phantom, export1, [
-            ('out_hires.out_surfs', 'sgreen')]),
-        (regseg_hi, export1, [
-            ('outputnode.out_surf', 'syellow')]),
-        (inputnode, ev_regseg_hi, [('out_csv', 'infonode.out_csv')])
-    ])
-
-    # Connect in_field in case it is an identity workflow
-    # if 'in_field' in [item[0] for item in reg.inputs.inputnode.items()]:
-    #     wf.connect(phantom, 'out_lowres.out_field',
-    #                reg, 'inputnode.in_field')
-
-    return wf
 
 
 def registration_ev(name='EvaluateMapping'):
@@ -193,7 +30,7 @@ def registration_ev(name='EvaluateMapping'):
         import numpy as np
         import nibabel as nb
         data = nb.load(in_file).get_data()
-        if (np.all(data < 1.0e-5)):
+        if np.all(data < 1.0e-5):
             return [0.0] * 5
         data = np.ma.masked_equal(data, 0)
         result = np.array([data.mean(), data.std(), data.max(), data.min(),

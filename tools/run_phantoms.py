@@ -2,23 +2,17 @@
 # -*- coding: utf-8 -*-
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
-#
-# @Author: oesteban - code@oscaresteban.es
-# @Date:   2014-04-15 10:09:24
-# @Last Modified by:   oesteban
-# @Last Modified time: 2017-10-13 14:57:31
-from __future__ import print_function, division, absolute_import, unicode_literals
+"""
+Experiments on randomly generated phantoms
+"""
 
-try:
-    from enthought.etsconfig.api import ETSConfig
-    ETSConfig.toolkit = 'null'
-except:
-    pass
+from __future__ import print_function, division, absolute_import, unicode_literals
 import os
 import os.path as op
 
 
 def get_parser():
+    """ Command line interface for the phantom experiments """
     from argparse import ArgumentParser
     from argparse import RawTextHelpFormatter
 
@@ -78,32 +72,11 @@ def get_parser():
     return parser
 
 
-def phantoms_wf(options, cfg):
-    import glob
-    import nipype.pipeline.engine as pe
+def main():
+    """Entry point"""
     from nipype import config, logging
-    from nipype.interfaces import utility as niu
-    from regseg.workflows import evaluation as ev
+    from regseg.workflows.phantoms import phantoms_wf
 
-    config.update_config(cfg)
-    logging.update_logging(config)
-
-    grid_size = options.grid_size
-    if len(grid_size) == 1:
-        grid_size = grid_size * 3
-
-    bs = ev.bspline(name=options.name, shapes=options.shape,
-                    snr_list=options.snr,
-                    N=options.repetitions)
-    bs.inputs.inputnode.grid_size = grid_size
-    bs.inputs.inputnode.lo_matrix = options.lo_matrix
-    bs.inputs.inputnode.hi_matrix = options.hi_matrix
-    bs.inputs.inputnode.cortex = options.no_cortex
-    bs.inputs.inputnode.out_csv = options.out_csv
-    return bs
-
-if __name__ == '__main__':
-    from shutil import copyfileobj
     options = get_parser().parse_args()
 
     # Setup multiprocessing
@@ -128,7 +101,14 @@ if __name__ == '__main__':
     if not op.exists(log_dir):
         os.makedirs(log_dir)
 
+    config.update_config(cfg)
+    logging.update_logging(config)
+
     wf = phantoms_wf(options, cfg)
     wf.base_dir = options.work_dir
     wf.write_graph(graph2use='hierarchical', format='pdf', simple_form=True)
     wf.run()
+
+
+if __name__ == '__main__':
+    main()

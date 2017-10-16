@@ -5,7 +5,8 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
                     curl \
                     git \
-                    graphviz && \
+                    graphviz \
+                    elastix && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Installing freesurfer
@@ -84,7 +85,7 @@ RUN conda install -c conda-forge -y openblas=0.2.19; \
 
 WORKDIR /src/pyregseg
 COPY requirements.txt /src/pyregseg/requirements.txt
-RUN pip install -r requirements.txt 
+RUN pip install -r requirements.txt
 
 COPY . /src/pyregseg/
 RUN pip install .[all]
