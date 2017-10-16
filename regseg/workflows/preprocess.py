@@ -15,19 +15,21 @@ def preprocess(name='Preprocessing'):
     from .fieldmap import bmap_registration
     from .surfaces import all_surfaces
 
-    fnames = dict(t1w='T1w_acpc_dc_restore.nii.gz',
-                  t1w_brain='T1w_acpc_dc_restore_brain.nii.gz',
-                  t2w='T2w_acpc_dc_restore.nii.gz',
-                  t2w_brain='T2w_acpc_dc_restore_brain.nii.gz',
-                  t1w_mask='brainmask_fs.nii.gz',
-                  dwi='dwi.nii.gz',
-                  dwi_mask='dwi_brainmask.nii.gz',
-                  bval='bvals',
-                  bvec='bvecs',
-                  aseg='aparc+aseg.nii.gz',
-                  fmap_mag='FM_mag.nii.gz',
-                  fmap_pha='FM_pha.nii.gz',
-                  mr_param='parameters.txt')
+    fnames = {
+        'aseg': 'aparc+aseg.nii.gz',
+        'bval': 'bvals',
+        'bvec': 'bvecs',
+        'dwi': 'dwi.nii.gz',
+        'dwi_mask': 'dwi_brainmask.nii.gz',
+        'fmap_mag': 'FM_mag.nii.gz',
+        'fmap_pha': 'FM_pha.nii.gz',
+        'mr_param': 'parameters.txt',
+        't1w': 'T1w_acpc_dc_restore.nii.gz',
+        't1w_brain': 'T1w_acpc_dc_restore_brain.nii.gz',
+        't1w_mask': 'brainmask_fs.nii.gz',
+        't2w': 'T2w_acpc_dc_restore.nii.gz',
+        't2w_brain': 'T2w_acpc_dc_restore_brain.nii.gz'
+    }
 
     ds_fields = ['t1w', 't2w', 't1w_brain', 't2w_brain', 't1w_mask', 'dwi',
                  'dwi_mask', 'bval', 'bvec', 'aseg', 'mr_param']
