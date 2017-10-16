@@ -6,7 +6,6 @@ Handling surfaces
 
 """
 from __future__ import absolute_import, unicode_literals, division, print_function
-import os.path as op
 import subprocess as sp
 
 import nibabel as nb
@@ -64,11 +63,11 @@ def _fixvtk(in_file, in_ref, out_file):
             pointid = -5
 
             for i, l in enumerate(f):
-                if (i == 4):
+                if i == 4:
                     s = l.split()
                     npoints = int(s[1])
                     fmt = np.dtype(s[2])
-                elif((i > 4) and (pointid < npoints)):
+                elif i > 4 and pointid < npoints:
                     vert = [float(x) for x in l.split()]
                     vert.append(1.0)
                     newvert = np.dot(matrix, vert)
