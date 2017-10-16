@@ -12,13 +12,15 @@ Defines the workflows for extracting surfaces from segmentations
 
 """
 from __future__ import print_function, division, absolute_import, unicode_literals
-import os
-import os.path as op
+from sys import version_info
 import nipype.pipeline.engine as pe             # pipeline engine
 from nipype.interfaces import utility as niu    # utility
 from nipype.interfaces import freesurfer as fs  # Freesurfer
 from ..interfaces.nilearn import Binarize
 from ..interfaces.surfaces import FixVTK
+
+PY2 = version_info[0] < 3
+
 
 def extract_surface(name='GenSurface'):
     """ A nipype workflow for surface extraction from ``labels`` in a segmentation.
@@ -33,7 +35,6 @@ freesurfer-subcortical-structures-into-blender/>
       * <https://mail.nmr.mgh.harvard.edu/pipermail/\
 freesurfer/2013-June/030586.html>
     """
-    import nipype.pipeline.engine as pe
     inputnode = pe.Node(niu.IdentityInterface(
         fields=['aseg', 'norm', 'in_filled', 'labels', 'name'],
         mandatory_inputs=False),
@@ -75,87 +76,51 @@ freesurfer/2013-June/030586.html>
     return wf
 
 
-def all_surfaces(name='Surfaces', gen_outer=False):
-    import nipype.pipeline.engine as pe
-    from nipype.interfaces.io import JSONFileGrabber
+def extract_surfaces_model(model, name='Surfaces', gen_outer=False):
+    """Extracts surfaces as prescribed by the model ``model``"""
+    import simplejson as json
     from .. import data
+    from pkg_resources import resource_filename as pkgrf
 
     inputnode = pe.Node(niu.IdentityInterface(
         fields=['aseg', 'norm', 'in_mask']), name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['out_surf']), name='outputnode')
 
-    readls = pe.Node(JSONFileGrabber(in_file=data.get('model_labels')),
-                     name='ReadModelLabels')
+    with open(pkgrf('regseg', 'data/%s.json' % model), 'rb' if PY2 else 'r') as sfh:
+        labels = json.load(sfh)
 
-    nsurfs = 0
-    tha = extract_surface(name='ThalSurface')
-    tha.inputs.inputnode.name = '%02d.thalamus' % nsurfs
-    nsurfs += 1
-
-    csf = extract_surface(name='VdGMSurface')
-    csf.inputs.inputnode.name = '%02d.csf_dgm' % nsurfs
-    nsurfs += 1
-
-    bstem = extract_surface(name='stemSurface')
-    bstem.inputs.inputnode.name = '%02d.bstem' % nsurfs
-    nsurfs += 1
-
-    wm = extract_surface(name='WMSurface')
-    wm.inputs.inputnode.name = '%02d.white' % nsurfs
-    nsurfs += 1
-
-    cgm = extract_surface(name='cbGMSurface')
-    cgm.inputs.inputnode.name = '%02d.cgm' % nsurfs
-    nsurfs += 1
-
-    pial = extract_surface(name='PialSurface')
-    pial.inputs.inputnode.name = '%02d.pial' % nsurfs
-    nsurfs += 1
-
-    if gen_outer:
-        nsurfs = nsurfs + 1
-
-    m = pe.Node(niu.Merge(nsurfs), name='MergeSurfs')
+    model_classes = list(labels.keys())
+    exsurfs = extract_surface()
+    exsurfs.get_node('inputnode').iterables = [
+        ('name', model_classes),
+        ('labels', [v for _, v in list(labels.items())]),
+    ]
 
     wf = pe.Workflow(name=name)
     wf.connect([
-        (inputnode, tha,   [('aseg', 'inputnode.aseg'),
-                            ('norm', 'inputnode.norm')]),
-        (readls,    tha,   [('thal_labels', 'inputnode.labels')]),
-        (tha,       m,     [('outputnode.out_surf', 'in1')]),
-        (inputnode, csf,   [('aseg', 'inputnode.aseg'),
-                            ('norm', 'inputnode.norm')]),
-        (readls,    csf,   [('csf_dgm_labels', 'inputnode.labels')]),
-        (csf,       m,     [('outputnode.out_surf', 'in2')]),
-        (inputnode, bstem, [('aseg', 'inputnode.aseg'),
-                            ('norm', 'inputnode.norm')]),
-        (readls,    bstem, [('bstem_labels', 'inputnode.labels')]),
-        (bstem,     m,     [('outputnode.out_surf', 'in3')]),
-        (inputnode, wm,    [('aseg', 'inputnode.aseg'),
-                            ('norm', 'inputnode.norm')]),
-        (readls,    wm,    [('wm_labels', 'inputnode.labels')]),
-        (wm,        m,     [('outputnode.out_surf', 'in4')]),
-        (inputnode, cgm,   [('aseg', 'inputnode.aseg'),
-                            ('norm', 'inputnode.norm')]),
-        (readls,    cgm,   [('cgm_labels', 'inputnode.labels')]),
-        (cgm,       m,     [('outputnode.out_surf', 'in5')]),
-        (inputnode, pial,  [('aseg', 'inputnode.aseg'),
-                            ('norm', 'inputnode.norm')]),
-        (readls,    pial,  [('gm_labels', 'inputnode.labels')]),
-        (pial,      m,     [('outputnode.out_surf', 'in6')]),
-        (m,    outputnode, [('out', 'out_surf')])
+        (inputnode, exsurfs,   [('aseg', 'inputnode.aseg'),
+                                ('norm', 'inputnode.norm')]),
     ])
 
+    if not gen_outer:
+        wf.connect([
+            (exsurfs,    outputnode, [('outputnode.out_surf', 'out_surf')]),
+        ])
+        return wf
+
     if gen_outer:
+        m = pe.Node(niu.Merge(2), name='MergeSurfs')
         msk = extract_surface(name='MaskSurf')
         msk.inputs.inputnode.labels = [1]
-        msk.inputs.inputnode.name = '%01d.outer' % nsurfs - 1
+        msk.inputs.inputnode.name = '%01d.outer' % (len(model_classes) - 1)
 
         wf.connect([
-            (inputnode, msk,  [('in_mask', 'inputnode.aseg'),
-                               ('in_mask', 'inputnode.norm')]),
-            (msk,       m,    [('outputnode.out_surf', 'in%d' % nsurfs)])
+            (inputnode, msk, [('in_mask', 'inputnode.aseg'),
+                              ('in_mask', 'inputnode.norm')]),
+            (exsurfs,     m, [('outputnode.out_surf', 'in1')]),
+            (msk,         m, [('outputnode.out_surf', 'in2')]),
+            (m,  outputnode, [('out', 'out_surf')]),
         ])
     return wf
 
@@ -166,7 +131,7 @@ def _fillmask(in_file, in_filled=None):
     from nipype.interfaces.base import isdefined
     import os.path as op
 
-    if (not isdefined(in_filled)) or (in_filled is None):
+    if in_filled is None or not isdefined(in_filled):
         return in_file
 
     nii = nb.load(in_file)

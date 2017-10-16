@@ -3,6 +3,7 @@
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 from __future__ import print_function, division, absolute_import, unicode_literals
 
+
 def preprocess(name='Preprocessing'):
     """
     Preprocessing of the regseg evaluation workflow
@@ -13,7 +14,7 @@ def preprocess(name='Preprocessing'):
 
     from ..interfaces.nilearn import Split, Merge
     from .fieldmap import bmap_registration
-    from .surfaces import all_surfaces
+    from .surfaces import extract_surfaces_model
 
     fnames = {
         'aseg': 'aparc+aseg.nii.gz',
@@ -50,7 +51,7 @@ def preprocess(name='Preprocessing'):
     ds.inputs.template_args = ds_tpl_args
 
     bmap_prep = bmap_registration()
-    surfs = all_surfaces()
+    surfs = extract_surfaces_model('model_dwi_labels')
 
     dwisplit = pe.Node(Split(), name='SplitDWIs')
     wdwi = warp_dwi()
