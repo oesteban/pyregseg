@@ -5,9 +5,14 @@
 Workflows to handle BOLD data
 """
 from __future__ import print_function, division, absolute_import, unicode_literals
-import nipype.pipeline.engine as pe
-from .surfaces import extract_surface
+from nipype.pipeline import engine as pe
+from nipype.interfaces import utility as niu
+from nipype.interfaces.ants import ApplyTransforms
 
+from .. import data
+from ..interfaces.niworkflows import GenerateSamplingReference
+from .surfaces import extract_surfaces_model
+from .registration import regseg_wf
 
 def bold_sdc_regseg(name='bold_regseg'):
     """
@@ -16,91 +21,51 @@ def bold_sdc_regseg(name='bold_regseg'):
 
     """
 
-    wf = pe.Workflow(name=name)
+    inputnode = pe.Node(
+        niu.IdentityInterface(['t1_brain', 't1_mask', 't1_aseg', 'bold_ref',
+                               'itk_t1_to_bold']),
+        name='inputnode')
 
-    return wf
+    # 1. Resample the T1w, the brainmask and the parcellation in BOLD space,
+    #    BUT keeping the original high resolution of the T1w image.
+    ref_bold = pe.Node(GenerateSamplingReference(), name='T1toBOLDSamplingReference')
 
+    t1brain_bold = pe.Node(ApplyTransforms(), name='T1toBOLD')
 
+    t1mask_bold = pe.Node(ApplyTransforms(interpolation='NearestNeighbor', float=True),
+                          name='T1toBOLDMask')
+    # TODO
+    # mri_label2vol --seg mri/aparc+aseg.mgz --temp mri/rawavg.mgz --o ~/tmp/regseg/bold/aparc.nii.gz --regheader mri/aparc+aseg.mgz
+    t1aseg_bold = pe.Node(ApplyTransforms(interpolation='NearestNeighbor', float=True),
+                          name='T1toBOLDAseg')
 
-def bold_model_surfaces(name='bold_surfaces', gen_outer=False):
-    from nipype.interfaces.io import JSONFileGrabber
-    from .. import data
-
-    inputnode = pe.Node(niu.IdentityInterface(
-        fields=['aseg', 'norm', 'in_mask']), name='inputnode')
-    outputnode = pe.Node(niu.IdentityInterface(
-        fields=['out_surf']), name='outputnode')
-
-    readls = pe.Node(JSONFileGrabber(in_file=data.get('model_labels')),
-                     name='ReadModelLabels')
-
-    nsurfs = 0
-    tha = extract_surface(name='ThalSurface')
-    tha.inputs.inputnode.name = '%02d.thalamus' % nsurfs
-    nsurfs += 1
-
-    csf = extract_surface(name='VdGMSurface')
-    csf.inputs.inputnode.name = '%02d.csf_dgm' % nsurfs
-    nsurfs += 1
-
-    bstem = extract_surface(name='stemSurface')
-    bstem.inputs.inputnode.name = '%02d.bstem' % nsurfs
-    nsurfs += 1
-
-    wm = extract_surface(name='WMSurface')
-    wm.inputs.inputnode.name = '%02d.white' % nsurfs
-    nsurfs += 1
-
-    cgm = extract_surface(name='cbGMSurface')
-    cgm.inputs.inputnode.name = '%02d.cgm' % nsurfs
-    nsurfs += 1
-
-    pial = extract_surface(name='PialSurface')
-    pial.inputs.inputnode.name = '%02d.pial' % nsurfs
-    nsurfs += 1
-
-    if gen_outer:
-        nsurfs = nsurfs + 1
-
-    m = pe.Node(niu.Merge(nsurfs), name='MergeSurfs')
+    # 2. Reconstruct the model surfaces on BOLD space
+    exsurfs = extract_surfaces_model('model_bold_labels')
 
     wf = pe.Workflow(name=name)
     wf.connect([
-        (inputnode, tha,   [('aseg', 'inputnode.aseg'),
-                            ('norm', 'inputnode.norm')]),
-        (readls,    tha,   [('thal_labels', 'inputnode.labels')]),
-        (tha,       m,     [('outputnode.out_surf', 'in1')]),
-        (inputnode, csf,   [('aseg', 'inputnode.aseg'),
-                            ('norm', 'inputnode.norm')]),
-        (readls,    csf,   [('csf_dgm_labels', 'inputnode.labels')]),
-        (csf,       m,     [('outputnode.out_surf', 'in2')]),
-        (inputnode, bstem, [('aseg', 'inputnode.aseg'),
-                            ('norm', 'inputnode.norm')]),
-        (readls,    bstem, [('bstem_labels', 'inputnode.labels')]),
-        (bstem,     m,     [('outputnode.out_surf', 'in3')]),
-        (inputnode, wm,    [('aseg', 'inputnode.aseg'),
-                            ('norm', 'inputnode.norm')]),
-        (readls,    wm,    [('wm_labels', 'inputnode.labels')]),
-        (wm,        m,     [('outputnode.out_surf', 'in4')]),
-        (inputnode, cgm,   [('aseg', 'inputnode.aseg'),
-                            ('norm', 'inputnode.norm')]),
-        (readls,    cgm,   [('cgm_labels', 'inputnode.labels')]),
-        (cgm,       m,     [('outputnode.out_surf', 'in5')]),
-        (inputnode, pial,  [('aseg', 'inputnode.aseg'),
-                            ('norm', 'inputnode.norm')]),
-        (readls,    pial,  [('gm_labels', 'inputnode.labels')]),
-        (pial,      m,     [('outputnode.out_surf', 'in6')]),
-        (m,    outputnode, [('out', 'out_surf')])
+        (inputnode, ref_bold, [('bold_ref', 'fixed_image'),
+                               ('t1_brain', 'moving_image')]),
+        (inputnode, t1brain_bold, [('t1_brain', 'input_image'),
+                                   ('itk_t1_to_bold', 'transforms')]),
+        (inputnode, t1mask_bold, [('t1_mask', 'input_image'),
+                                  ('itk_t1_to_bold', 'transforms')]),
+        (inputnode, t1aseg_bold, [('t1_aseg', 'input_image'),
+                                  ('itk_t1_to_bold', 'transforms')]),
+        (ref_bold, t1brain_bold, [('out_file', 'reference_image')]),
+        (ref_bold, t1mask_bold, [('out_file', 'reference_image')]),
+        (ref_bold, t1aseg_bold, [('out_file', 'reference_image')]),
+        (t1brain_bold, exsurfs, [('output_image', 'inputnode.norm')]),
+        (t1mask_bold, exsurfs, [('output_image', 'inputnode.in_mask')]),
+        (t1aseg_bold, exsurfs, [('output_image', 'inputnode.aseg')]),
     ])
 
-    if gen_outer:
-        msk = extract_surface(name='MaskSurf')
-        msk.inputs.inputnode.labels = [1]
-        msk.inputs.inputnode.name = '%01d.outer' % nsurfs - 1
+    # 3. Run regseg
+    regseg = regseg_wf(data.get('regseg_hcp'), usemask=False, enhance_inputs=False)
 
-        wf.connect([
-            (inputnode, msk,  [('in_mask', 'inputnode.aseg'),
-                               ('in_mask', 'inputnode.norm')]),
-            (msk,       m,    [('outputnode.out_surf', 'in%d' % nsurfs)])
-        ])
+    wf.connect([
+        (inputnode, regseg, [('bold_ref', 'inputnode.in_fixed')]),
+        (exsurfs, regseg, [('outputnode.out_surf', 'inputnode.in_surf')]),
+    ])
+
     return wf

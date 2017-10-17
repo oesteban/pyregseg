@@ -58,6 +58,7 @@ REQUIRES = [
     'nipype',
     'phantomas',
     'nilearn',
+    'niworkflows',
 ]
 
 LINKS_REQUIRES = [
